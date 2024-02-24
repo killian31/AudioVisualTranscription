@@ -52,7 +52,9 @@ if __name__ == "__main__":
     iface = gr.Interface(
         fn=generate_video,
         inputs=[
-            gr.Audio(sources=["upload", "microphone"], type="filepath"),
+            gr.Audio(
+                sources=["upload", "microphone"], type="filepath", label="Audio File"
+            ),
             gr.Dropdown(
                 ["en", "es", "fr", "de", "it", "nl", "ru", "zh"],
                 label="Language",
