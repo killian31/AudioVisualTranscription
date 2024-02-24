@@ -2,6 +2,8 @@
 
 Get your synchronized subtitiled video in seconds!
 
+![App screenshot](./app_ex.png)
+
 ## Installation
 
 In your terminal, run
