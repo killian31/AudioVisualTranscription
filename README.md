@@ -1,3 +1,9 @@
+---
+title: AudioVisualTranscription
+app_file: app.py
+sdk: gradio
+sdk_version: 4.19.2
+---
 # Speech to Video Subtitles
 
 Get your synchronized subtitiled video in seconds!
