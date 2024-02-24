@@ -6,7 +6,7 @@ Get your synchronized subtitiled video in seconds!
 
 ## Installation
 
-In your terminal, run
+In your terminal, run (requires python<=3.11)
 
 ```bash
 git clone https://github.com/killian31/AudioVisualTranscription
