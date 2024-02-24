@@ -1,16 +1,11 @@
 import gradio as gr
-import numpy as np
 import torch
 import whisper
-from moviepy.editor import *
+from moviepy.editor import AudioFileClip, ColorClip, concatenate_videoclips
 from moviepy.video.VideoClip import TextClip
 
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-model = whisper.load_model("base", device=DEVICE)
-
-
-def generate_video(audio_path, language):
+def generate_video(audio_path, language, lag):
     # Transcribe audio
     result = model.transcribe(audio_path, language=language)
 
@@ -31,8 +26,13 @@ def generate_video(audio_path, language):
         )
         clips.append(text_clip)
 
+    if lag > 0:
+        clips.insert(0, ColorClip((1280, 720), color=(0, 0, 0)).set_duration(lag))
+
     # Concatenate clips and set audio
     video = concatenate_videoclips(clips, method="compose")
+
+    # Add audio to the video
     video = video.set_audio(AudioFileClip(audio_path))
 
     # Export video to a buffer
@@ -43,11 +43,13 @@ def generate_video(audio_path, language):
 
 
 if __name__ == "__main__":
-
-    print(
-        f"Model is {'multilingual' if model.is_multilingual else 'English-only'} "
-        f"and has {sum(np.prod(p.shape) for p in model.parameters()):,} parameters."
+    DEVICE = (
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps" if torch.backends.mps.is_available() else "cpu"
     )
+    model = whisper.load_model("base", device=DEVICE)
+
     # Gradio interface
     iface = gr.Interface(
         fn=generate_video,
@@ -58,6 +60,14 @@ if __name__ == "__main__":
             gr.Dropdown(
                 ["en", "es", "fr", "de", "it", "nl", "ru", "zh"],
                 label="Language",
+                value="en",
+            ),
+            gr.Slider(
+                minimum=0,
+                maximum=10,
+                step=1,
+                value=0,
+                label="Lag (seconds): delay the transcription by this amount of time.",
             ),
         ],
         outputs=gr.Video(label="Play Video", show_download_button=True),
