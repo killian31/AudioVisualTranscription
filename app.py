@@ -46,7 +46,7 @@ if __name__ == "__main__":
     DEVICE = (
         "cuda"
         if torch.cuda.is_available()
-        else "mps" if torch.backends.mps.is_available() else "cpu"
+        else "cpu"
     )
     model = whisper.load_model("base", device=DEVICE)
 
