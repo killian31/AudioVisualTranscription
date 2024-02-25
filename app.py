@@ -10,7 +10,9 @@ from pydub import AudioSegment
 from tqdm import tqdm
 
 
-def generate_video_cv2(audio_path, language, lag, progress=gr.Progress()):
+def generate_video_cv2(
+    audio_path, language, lag, progress=gr.Progress(track_tqdm=True)
+):
 
     # Transcribe audio
     progress(0.0, "Transcribing audio...")
