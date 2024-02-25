@@ -15,8 +15,15 @@ def generate_video(audio_path, language, lag, progress=gr.Progress(track_tqdm=Tr
     clips = []
     total_segments = len(result["segments"])
     running_progress = 0.0
+    current_time = 0.0
     for segment in result["segments"]:
         running_progress += 0.4 / total_segments
+        if segment["start"] > current_time:
+            clips.append(
+                ColorClip((1280, 720), color=(0, 0, 0)).set_duration(
+                    segment["start"] - current_time
+                )
+            )
         text_clip = (
             TextClip(
                 segment["text"],
@@ -30,6 +37,7 @@ def generate_video(audio_path, language, lag, progress=gr.Progress(track_tqdm=Tr
             .set_start(segment["start"])
         )
         clips.append(text_clip)
+        current_time = segment["end"]
         progress(min(0.3 + running_progress, 0.7), "Generating video frames...")
 
     if lag > 0:
