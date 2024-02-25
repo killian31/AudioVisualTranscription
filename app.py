@@ -1,58 +1,115 @@
+import subprocess
+
+import cv2
 import gradio as gr
+import numpy as np
 import torch
 import whisper
-from moviepy.editor import AudioFileClip, ColorClip, concatenate_videoclips
-from moviepy.video.VideoClip import TextClip
+from PIL import Image, ImageDraw, ImageFont
+from pydub import AudioSegment
 
 
-def generate_video(audio_path, language, lag):
+def draw_centered_text(img_pil, text, font_size, frame_size):
+    draw = ImageDraw.Draw(img_pil)
+    width, height = frame_size
+
+    # Load a basic font
+    font = ImageFont.truetype(None, font_size)
+
+    # Calculate text size and position
+    text_width, text_height = draw.textsize(text, font=font)
+    x = (width - text_width) / 2
+    y = (height - text_height) / 2
+
+    # Adjust font size if text is too wide
+    while text_width > width - 20:  # Adjust for padding
+        font_size -= 1  # Decrease font size
+        font = ImageFont.truetype(None, font_size)
+        text_width, text_height = draw.textsize(text, font=font)
+        x = (width - text_width) / 2
+        y = (height - text_height) / 2
+
+    # Draw text
+    draw.text((x, y), text, font=font, fill=(255, 255, 255))
+
+    return img_pil
+
+
+def generate_video_cv2(audio_path, language, lag):
+
     # Transcribe audio
     result = model.transcribe(audio_path, language=language)
 
-    # Prepare video clips from transcription segments
-    clips = []
+    # Video settings
+    fps = 6
+    frame_size = (1280, 720)
+    font_face = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.75
+    font_color = (255, 255, 255)  # White
+    background_color = (0, 0, 0)  # Black
+    output_path = "./transcribed_video_cv2.mp4"
+
+    # Initialize video writer
+    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    video = cv2.VideoWriter(output_path, fourcc, fps, frame_size)
+
+    # Prepare video frames from transcription segments
     for segment in result["segments"]:
-        text_clip = (
-            TextClip(
-                segment["text"],
-                fontsize=24,
-                font="Arial",
-                color="white",
-                bg_color="black",
-                size=(1280, 720),
+        text = segment["text"]
+        duration = segment["end"] - segment["start"]
+        frames_count = int(duration * fps)
+
+        for _ in range(frames_count):
+            img = np.full(
+                (frame_size[1], frame_size[0], 3), background_color, dtype=np.uint8
             )
-            .set_duration(segment["end"] - segment["start"])
-            .set_start(segment["start"])
-        )
-        clips.append(text_clip)
+            # center text
+            cv2.putText(
+                img,
+                text,
+                (10, frame_size[1] // 2),
+                font_face,
+                font_scale,
+                font_color,
+                2,
+                cv2.LINE_AA,
+            )
 
+            video.write(img)
+
+    video.release()
+
+    # Add lag if specified
     if lag > 0:
-        clips.insert(0, ColorClip((1280, 720), color=(0, 0, 0)).set_duration(lag))
+        audio = AudioSegment.silent(duration=lag * 1000) + AudioSegment.from_file(
+            audio_path
+        )
+    else:
+        audio = AudioSegment.from_file(audio_path)
 
-    # Concatenate clips and set audio
-    video = concatenate_videoclips(clips, method="compose")
+    # Export audio
+    audio_path_modified = "./modified_audio.mp3"
+    audio.export(audio_path_modified, format="mp3")
 
-    # Add audio to the video
-    video = video.set_audio(AudioFileClip(audio_path))
+    # Merge audio and video using FFmpeg
+    final_output_path = "./final_transcribed_video.mp4"
+    cmd = f"ffmpeg -y -i {output_path} -i {audio_path_modified} -c:v copy -c:a aac {final_output_path}"
+    subprocess.run(cmd.split())
 
-    # Export video to a buffer
-    output_path = "./transcribed_video.mp4"
-    video.write_videofile(output_path, fps=6, codec="libx264", audio_codec="aac")
-
-    return output_path
+    return final_output_path
 
 
 if __name__ == "__main__":
-    DEVICE = (
+    # Load Whisper model
+    device = (
         "cuda"
         if torch.cuda.is_available()
         else "cpu"
     )
-    model = whisper.load_model("base", device=DEVICE)
-
+    model = whisper.load_model("base", device=device)
     # Gradio interface
     iface = gr.Interface(
-        fn=generate_video,
+        fn=generate_video_cv2,
         inputs=[
             gr.Audio(
                 sources=["upload", "microphone"], type="filepath", label="Audio File"
