@@ -3,6 +3,5 @@ numpy
 openai_whisper
 opencv_python
 opencv_python_headless
-Pillow
 pydub
 torch

@@ -5,34 +5,7 @@ import gradio as gr
 import numpy as np
 import torch
 import whisper
-from PIL import Image, ImageDraw, ImageFont
 from pydub import AudioSegment
-
-
-def draw_centered_text(img_pil, text, font_size, frame_size):
-    draw = ImageDraw.Draw(img_pil)
-    width, height = frame_size
-
-    # Load a basic font
-    font = ImageFont.truetype(None, font_size)
-
-    # Calculate text size and position
-    text_width, text_height = draw.textsize(text, font=font)
-    x = (width - text_width) / 2
-    y = (height - text_height) / 2
-
-    # Adjust font size if text is too wide
-    while text_width > width - 20:  # Adjust for padding
-        font_size -= 1  # Decrease font size
-        font = ImageFont.truetype(None, font_size)
-        text_width, text_height = draw.textsize(text, font=font)
-        x = (width - text_width) / 2
-        y = (height - text_height) / 2
-
-    # Draw text
-    draw.text((x, y), text, font=font, fill=(255, 255, 255))
-
-    return img_pil
 
 
 def generate_video_cv2(audio_path, language, lag):
@@ -101,11 +74,7 @@ def generate_video_cv2(audio_path, language, lag):
 
 if __name__ == "__main__":
     # Load Whisper model
-    device = (
-        "cuda"
-        if torch.cuda.is_available()
-        else "cpu"
-    )
+    device = "cuda" if torch.cuda.is_available() else "cpu"
     model = whisper.load_model("base", device=device)
     # Gradio interface
     iface = gr.Interface(
