@@ -72,7 +72,7 @@ if __name__ == "__main__":
                 sources=["upload", "microphone"], type="filepath", label="Audio File"
             ),
             gr.Dropdown(
-                ["en", "es", "fr", "de", "it", "nl", "ru", "zh"],
+                ["en", "es", "fr", "de", "it", "nl", "ru", "no", "zh"],
                 label="Language",
                 value="en",
             ),
