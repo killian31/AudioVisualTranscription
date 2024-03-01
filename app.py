@@ -1,63 +1,87 @@
 import gradio as gr
 import torch
 import whisper
-from moviepy.editor import AudioFileClip, ColorClip, concatenate_videoclips
+from moviepy.editor import (
+    AudioFileClip,
+    ColorClip,
+    CompositeVideoClip,
+    VideoFileClip,
+    concatenate_videoclips,
+)
 from moviepy.video.VideoClip import TextClip
 
 
-def generate_video(audio_path, language, lag, progress=gr.Progress(track_tqdm=True)):
+def generate_srt_file(transcription_result, srt_file_path, lag=0):
+    with open(srt_file_path, "w") as file:
+        for i, segment in enumerate(transcription_result["segments"], start=1):
+            # Adjusting times for lag
+            start_time = segment["start"] + lag
+            end_time = segment["end"] + lag
+            text = segment["text"]
+
+            # Convert times to SRT format (HH:MM:SS,MS)
+            start_srt = f"{int(start_time // 3600):02d}:{int((start_time % 3600) // 60):02d}:{int(start_time % 60):02d},{int((start_time % 1) * 1000):03d}"
+            end_srt = f"{int(end_time // 3600):02d}:{int((end_time % 3600) // 60):02d}:{int(end_time % 60):02d},{int((end_time % 1) * 1000):03d}"
+
+            file.write(f"{i}\n{start_srt} --> {end_srt}\n{text}\n\n")
+
+
+def generate_video(
+    audio_path, video_path, input, language, lag, progress=gr.Progress(track_tqdm=True)
+):
+
+    # Check if the input is a video
+    progress(0.0, "Checking input...")
+    if input == "Video":
+        progress(0.0, "Extracting audio from video...")
+        audio_path = "./temp_audio.wav"
+        video = VideoFileClip(video_path)
+        video.audio.write_audiofile(audio_path)
+        video.close()
+        progress(0.1, "Audio extracted!")
+
     # Transcribe audio
-    progress(0.0, "Transcribing audio...")
+    progress(0.1, "Transcribing audio...")
     result = model.transcribe(audio_path, language=language)
     progress(0.30, "Audio transcribed!")
 
-    # Prepare video clips from transcription segments
-    clips = []
-    total_segments = len(result["segments"])
-    running_progress = 0.0
-    current_time = 0.0
-    for segment in result["segments"]:
-        running_progress += 0.4 / total_segments
-        if segment["start"] > current_time:
-            clips.append(
-                ColorClip((1280, 720), color=(0, 0, 0)).set_duration(
-                    segment["start"] - current_time
-                )
+    # Generate SRT file
+    progress(0.30, "Generating SRT file...")
+    srt_file_path = "./temp.srt"
+    generate_srt_file(result, srt_file_path, lag=lag)
+    progress(0.40, "SRT file generated!")
+
+    if input == "Video":
+        # if lag is 0, we can use the original video, else we need to create a new video
+        if lag == 0:
+            return video_path, srt_file_path
+        else:
+            # we simply extend the original video with a black screen at the end of duration lag
+            video = VideoFileClip(video_path)
+            fps = video.fps
+            black_screen = ColorClip(
+                size=video.size, color=(0, 0, 0), duration=lag
+            ).set_fps(1)
+            final_video = concatenate_videoclips([video, black_screen])
+            output_video_path = "./transcribed_video.mp4"
+            final_video.write_videofile(
+                output_video_path, codec="libx264", audio_codec="aac"
             )
-        text_clip = (
-            TextClip(
-                segment["text"],
-                fontsize=24,
-                font="Arial",
-                color="white",
-                bg_color="black",
-                size=(1280, 720),
-            )
-            .set_duration(segment["end"] - segment["start"])
-            .set_start(segment["start"])
+            return output_video_path, srt_file_path
+    else:
+        output_video_path = "./transcribed_video.mp4"
+        audio_clip = AudioFileClip(audio_path)
+        duration = audio_clip.duration + lag
+        video_clip = ColorClip(
+            size=(1280, 720), color=(0, 0, 0), duration=duration
+        ).set_fps(
+            1
+        )  # Low fps
+        video_clip = video_clip.set_audio(audio_clip)
+        video_clip.write_videofile(
+            output_video_path, codec="libx264", audio_codec="aac"
         )
-        clips.append(text_clip)
-        current_time = segment["end"]
-        progress(min(0.3 + running_progress, 0.7), "Generating video frames...")
-
-    if lag > 0:
-        clips.insert(0, ColorClip((1280, 720), color=(0, 0, 0)).set_duration(lag))
-    progress(0.7, "Video frames generated!")
-
-    # Concatenate clips and set audio
-    progress(0.75, "Concatenating video clips...")
-    video = concatenate_videoclips(clips, method="compose")
-
-    # Add audio to the video
-    progress(0.85, "Adding audio to video...")
-    video = video.set_audio(AudioFileClip(audio_path))
-
-    # Export video to a buffer
-    progress(0.90, "Exporting video...")
-    output_path = "./transcribed_video.mp4"
-    video.write_videofile(output_path, fps=6, codec="libx264", audio_codec="aac")
-    progress(1.0, "Video exported!")
-    return output_path
+        return output_video_path, srt_file_path
 
 
 if __name__ == "__main__":
@@ -69,8 +93,12 @@ if __name__ == "__main__":
         fn=generate_video,
         inputs=[
             gr.Audio(
-                sources=["upload", "microphone"], type="filepath", label="Audio File"
+                sources=["upload", "microphone"],
+                type="filepath",
+                label="Audio File",
             ),
+            gr.Video(label="Or Video File", sources=["upload", "webcam"]),
+            gr.Dropdown(["Video", "Audio"], label="File Type", value="Audio"),
             gr.Dropdown(
                 ["en", "es", "fr", "de", "it", "nl", "ru", "no", "zh"],
                 label="Language",
