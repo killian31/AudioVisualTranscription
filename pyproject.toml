@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "audiovisualtranscription"
+version = "1.0.0"
+description = "Get your synchronized subtitiled video in seconds!"
+authors = ["killian31 <80256683+killian31@users.noreply.github.com>"]
+license = "Apache 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.10,<=3.11.9"
+gradio = "5.1.0"
+moviepy = "1.0.3"
+torch = "2.2.2"
+numpy = "1.23.5"
+openai-whisper = "^20240930"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
