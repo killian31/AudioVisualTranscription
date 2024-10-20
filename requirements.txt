@@ -1,5 +1,5 @@
-gradio
-moviepy
-numpy
-openai_whisper
-torch
+gradio==5.1.0
+moviepy==1.0.3
+numpy==1.23.5
+openai_whisper==20240930
+torch==2.2.2

@@ -29,8 +29,12 @@ def generate_srt_file(transcription_result, srt_file_path, lag=0):
 def generate_video(
     audio_path, video_path, input, language, lag, progress=gr.Progress(track_tqdm=True)
 ):
-
-    # Check if the input is a video
+    if audio_path is None and video_path is None:
+        raise ValueError("Please upload an audio or video file.")
+    if input == "Video" and video_path is None:
+        raise ValueError("Please upload a video file.")
+    if input == "Audio" and audio_path is None:
+        raise ValueError("Please upload an audio file.")
     progress(0.0, "Checking input...")
     if input == "Video":
         progress(0.0, "Extracting audio from video...")
