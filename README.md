@@ -2,7 +2,7 @@
 title: AudioVisualTranscription
 app_file: app.py
 sdk: gradio
-sdk_version: 4.19.2
+sdk_version: 5.1.0
 ---
 # Speech to Video Subtitles
 
@@ -12,12 +12,15 @@ Get your synchronized subtitiled video in seconds!
 
 ## Installation
 
-In your terminal, run (requires python<=3.11)
+In your terminal, run the following commands
 
 ```bash
 git clone https://github.com/killian31/AudioVisualTranscription
 cd AudioVisualTranscription
-pip install -r requirements.txt
+pyenv virtualenv 3.11.9 avt
+pyenv activate avt
+pip install poetry
+poetry install
 ```
 
 The app needs ImageMagick and ffmpeg to run. To install them, run
