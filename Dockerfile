@@ -1,5 +1,5 @@
 # Use a base Python image
-FROM python:3.11
+FROM python:3.11.9
 
 # Install system-level dependencies
 RUN apt-get update && apt-get install -y \
@@ -17,6 +17,7 @@ WORKDIR /app
 COPY . /app
 
 # Install Python dependencies using Poetry
+RUN pip install poetry
 RUN poetry config virtualenvs.create false && poetry install --no-root
 
 # Command to run the Gradio app
