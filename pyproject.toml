@@ -5,6 +5,7 @@ description = "Get your synchronized subtitiled video in seconds!"
 authors = ["killian31 <80256683+killian31@users.noreply.github.com>"]
 license = "Apache 2.0"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.10,<=3.11.9"
