@@ -1,4 +1,4 @@
-# AudioVisualTranscription - Speech to Video Subtitles 🎥✨
+# AudioVisualTranscription
 
 [![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-md.svg)](https://huggingface.co/spaces)
 
