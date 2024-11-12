@@ -1,6 +1,6 @@
 # AudioVisualTranscription
 
-[![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-md.svg)](https://huggingface.co/spaces)
+[![Open in Spaces](https://huggingface.co/datasets/huggingface/badges/resolve/main/open-in-hf-spaces-lg-dark.svg)](https://huggingface.co/spaces/nelikCode/AudioVisualTranscription)
 
 Get your synchronized subtitled video in minutes with AI!
 
