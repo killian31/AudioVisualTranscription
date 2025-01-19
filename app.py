@@ -148,7 +148,12 @@ def download_srt(audio_input: str, video_input: str) -> str:
 
 
 if __name__ == "__main__":
-    DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.cuda.is_available():
+        DEVICE = "cuda"
+    elif torch.backend.mps.is_available():
+        DEVICE = "mps"
+    else:
+        DEVICE = "cpu"
     MODEL = whisper.load_model("base", device=DEVICE)
 
     with gr.Blocks(theme=gr.themes.Soft()) as demo:

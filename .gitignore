@@ -1,0 +1,9 @@
+.DS_Store
+*.wav
+*.srt
+*.m4a
+*.mp3
+*.mp4
+*.png
+dist/*
+flagged/*
